@@ -1,0 +1,102 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  color: #222;
+}
+
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.panel {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  padding: 20px;
+}
+
+.menu-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.menu-card,
+.order-card,
+.confirmation,
+.summary,
+.cart,
+.track-box {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.menu-card {
+  min-width: 160px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checkbox-label {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 6px 14px 6px 0;
+}
+
+input,
+select {
+  padding: 8px;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+}
+
+button {
+  margin: 8px 8px 8px 0;
+  padding: 8px 12px;
+  border: none;
+  background: #222;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #444;
+}
+
+.message {
+  background: #fff3cd;
+  border: 1px solid #ffe08a;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.small-note {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+ul {
+  padding-left: 20px;
+}
