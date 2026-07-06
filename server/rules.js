@@ -1,7 +1,5 @@
 const menu = require("./menu");
 
-// Change this value according to the last digit of the ID of the submitting student.
-// You can also run the server with: RULE_DIGIT=5 npm start
 const PERSONAL_RULE_DIGIT = process.env.RULE_DIGIT || "0";
 
 function getMenuItem(collection, id) {

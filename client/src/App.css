@@ -11,6 +11,61 @@ body {
   padding: 24px;
 }
 
+.landing {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin: 80px auto 0;
+  max-width: 720px;
+  padding: 32px;
+  text-align: center;
+}
+
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.role-card {
+  min-height: 86px;
+  width: 100%;
+  font-size: 1rem;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.topbar h1 {
+  margin: 0;
+}
+
+.topbar nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.nav-button {
+  margin: 0;
+  background: white;
+  color: #222;
+  border: 1px solid #bbb;
+}
+
+.nav-button.active,
+.nav-button:hover {
+  background: #222;
+  color: white;
+}
+
 .panel {
   background: white;
   border: 1px solid #ddd;
@@ -99,4 +154,15 @@ button:hover {
 
 ul {
   padding-left: 20px;
+}
+
+@media (max-width: 700px) {
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .topbar nav {
+    justify-content: flex-start;
+  }
 }

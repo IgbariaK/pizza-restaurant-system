@@ -2,16 +2,14 @@
 
 ## Students
 
-> Replace the placeholders before submission.
 
 | Student | Full Name | ID |
 |---|---|---|
-| 1 | Khaled Igbaria | TODO |
-| 2 | TODO | TODO |
+| 1 | Khaled Igbaria | 211669700 |
 
 ## Repository Link
 
-TODO: Add the GitHub repository link here.
+https://github.com/IgbariaK/pizza-restaurant-system.git
 
 ## Project Description
 
@@ -186,22 +184,11 @@ PERSONAL_RULE_DIGIT = 0
 Rule for last digit `0`:
 
 ```text
-A customer can choose up to two toppings for each pizza.
+I am alone on this
 ```
 
 The rule is checked on the server during order validation. If a pizza has more than two toppings, the server returns status code `400`.
 
-If the submitting student's ID has a different last digit, change this line in `server/rules.js`:
-
-```js
-const PERSONAL_RULE_DIGIT = process.env.RULE_DIGIT || "0";
-```
-
-For example:
-
-```js
-const PERSONAL_RULE_DIGIT = process.env.RULE_DIGIT || "5";
-```
 
 ## Changes from Exercise 1
 
@@ -260,24 +247,3 @@ The most challenging part was managing the correct order status flow and making 
 
 One design decision was to calculate the final price only on the server.  
 This keeps the logic safe and consistent because the client only sends the selected pizzas, sizes, and toppings, not the final trusted price.
-
-## Notes Before Submission
-
-Before submitting:
-
-1. Rename the root folder to:
-
-```text
-pizza_app_<student_id>
-```
-
-2. Rename the ZIP file to:
-
-```text
-pizza_app_<student_id>.zip
-```
-
-3. Fill in both students' full names and IDs in this README.
-4. Add the GitHub repository link.
-5. Make sure the personal rule digit matches the last digit of the ID of the submitting student.
-6. Do not include `node_modules` in the submitted ZIP.

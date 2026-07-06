@@ -2,6 +2,12 @@ import React, { useEffect, useMemo, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
+const ROLE_LABELS = {
+  customer: "Client",
+  employee: "Restaurant Employee",
+  courier: "Courier"
+};
+
 function emptySelection() {
   return { pizzaId: "margherita", size: "small", toppings: [] };
 }
@@ -11,6 +17,7 @@ function money(value) {
 }
 
 function App() {
+  const [activeRole, setActiveRole] = useState(null);
   const [menu, setMenu] = useState({ pizzas: [], sizes: [], toppings: [] });
   const [selection, setSelection] = useState(emptySelection());
   const [cart, setCart] = useState([]);
@@ -24,8 +31,13 @@ function App() {
 
   useEffect(() => {
     loadMenu();
-    refreshStaffScreens();
   }, []);
+
+  useEffect(() => {
+    if (activeRole === "employee" || activeRole === "courier") {
+      refreshStaffScreens();
+    }
+  }, [activeRole]);
 
   async function loadMenu() {
     try {
@@ -49,17 +61,25 @@ function App() {
       const readyOrders = await readyOrdersResponse.json();
       setEmployeeOrders([...newOrders, ...preparingOrders]);
       setDeliveryOrders(readyOrders);
+      setMessage("");
     } catch (error) {
       setMessage("Could not refresh orders. Make sure the server is running.");
     }
   }
 
+  function chooseRole(role) {
+    setActiveRole(role);
+    setMessage("");
+  }
+
   function findPizza(id) {
     return menu.pizzas.find((pizza) => pizza.id === id);
   }
+
   function findSize(id) {
     return menu.sizes.find((size) => size.id === id);
   }
+
   function findTopping(id) {
     return menu.toppings.find((topping) => topping.id === id);
   }
@@ -127,7 +147,6 @@ function App() {
       setConfirmation(data);
       setCart([]);
       setCustomer({ customerName: "", phone: "", deliveryAddress: "" });
-      await refreshStaffScreens();
     } catch (error) {
       setMessage("Could not create order. Make sure the server is running.");
     }
@@ -163,9 +182,10 @@ function App() {
       });
       const data = await response.json();
       if (!response.ok) {
-        setMessage(data.message);
+        setMessage(data.message || "The server rejected the status update.");
         return;
       }
+      setMessage("");
       await refreshStaffScreens();
     } catch (error) {
       setMessage("Could not update order status. Make sure the server is running.");
@@ -205,13 +225,46 @@ function App() {
     );
   }
 
-  return (
-    <main className="app">
-      <h1>Pizza Restaurant Ordering System</h1>
-      {message && <div className="message">{message}</div>}
+  function renderLanding() {
+    return (
+      <section className="landing">
+        <h1>Pizza Restaurant Ordering System</h1>
+        <p>What kind of user are you?</p>
+        <div className="role-grid">
+          {Object.entries(ROLE_LABELS).map(([role, label]) => (
+            <button className="role-card" key={role} onClick={() => chooseRole(role)}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </section>
+    );
+  }
 
+  function renderNav() {
+    if (!activeRole) return null;
+    return (
+      <header className="topbar">
+        <h1>Pizza Restaurant Ordering System</h1>
+        <nav aria-label="User pages">
+          {Object.entries(ROLE_LABELS).map(([role, label]) => (
+            <button
+              className={activeRole === role ? "nav-button active" : "nav-button"}
+              key={role}
+              onClick={() => chooseRole(role)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+      </header>
+    );
+  }
+
+  function renderCustomerPage() {
+    return (
       <section className="panel">
-        <h2>Customer Screen</h2>
+        <h2>Client Page</h2>
         <div data-testid="menu-list">
           <h3>Menu</h3>
           <div className="menu-grid">
@@ -291,27 +344,37 @@ function App() {
           {trackedOrder && <p>Order {trackedOrder.id} status: <strong>{trackedOrder.status}</strong></p>}
         </div>
       </section>
+    );
+  }
 
+  function renderEmployeePage() {
+    return (
       <section className="panel">
-        <h2>Restaurant Employee Screen</h2>
+        <h2>Restaurant Employee Page</h2>
         <button onClick={refreshStaffScreens}>Refresh Orders</button>
         <div data-testid="employee-orders">
           {employeeOrders.length === 0 ? <p>No active orders.</p> : employeeOrders.map((order) => (
             <div className="order-card" key={order.id}>
               <h3>Order #{order.id}</h3>
               <p>Customer: {order.customerName}</p>
+              <p>Phone: {order.phone}</p>
+              <p>Address: {order.deliveryAddress}</p>
               <p>Status: {order.status}</p>
               <p>Total: {money(order.totalPrice)}</p>
               {renderOrderItems(order)}
-              {order.status === "new" && <button onClick={() => updateOrderStatus(order.id, "preparing")}>Update to Preparing</button>}
-              {order.status === "preparing" && <button onClick={() => updateOrderStatus(order.id, "ready")}>Update to Ready</button>}
+              {order.status === "new" && <button onClick={() => updateOrderStatus(order.id, "preparing")}>Start Preparing</button>}
+              {order.status === "preparing" && <button onClick={() => updateOrderStatus(order.id, "ready")}>Mark Ready</button>}
             </div>
           ))}
         </div>
       </section>
+    );
+  }
 
+  function renderCourierPage() {
+    return (
       <section className="panel">
-        <h2>Courier Screen</h2>
+        <h2>Courier Page</h2>
         <button onClick={refreshStaffScreens}>Refresh Ready Orders</button>
         <div data-testid="delivery-orders">
           {deliveryOrders.length === 0 ? <p>No orders ready for delivery.</p> : deliveryOrders.map((order) => (
@@ -325,6 +388,21 @@ function App() {
           ))}
         </div>
       </section>
+    );
+  }
+
+  function renderActivePage() {
+    if (activeRole === "customer") return renderCustomerPage();
+    if (activeRole === "employee") return renderEmployeePage();
+    if (activeRole === "courier") return renderCourierPage();
+    return renderLanding();
+  }
+
+  return (
+    <main className="app">
+      {renderNav()}
+      {message && <div className="message">{message}</div>}
+      {renderActivePage()}
     </main>
   );
 }
