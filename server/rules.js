@@ -13,7 +13,7 @@ function validateBasicOrderInput(body) {
     return ["Request body is missing or invalid"];
   }
 
-  const { customerName, phone, deliveryAddress, pizzas } = body;
+  const { customerName, phone, deliveryAddress, pizzas, drinks } = body;
 
   if (!customerName || typeof customerName !== "string" || customerName.trim().length === 0) {
     errors.push("customerName is required");
@@ -27,11 +27,39 @@ function validateBasicOrderInput(body) {
     errors.push("deliveryAddress is required");
   }
 
-  if (!Array.isArray(pizzas) || pizzas.length === 0) {
-    errors.push("pizzas must contain at least one pizza");
+  if (!Array.isArray(pizzas)) {
+    errors.push("pizzas must be an array");
+  }
+
+  if (drinks !== undefined && !Array.isArray(drinks)) {
+    errors.push("drinks must be an array");
+  }
+
+  if (Array.isArray(pizzas) && pizzas.length === 0 && (!Array.isArray(drinks) || drinks.length === 0)) {
+    errors.push("order must contain at least one pizza or drink");
   }
 
   return errors;
+}
+
+function normalizeAndValidateDrinks(drinks = []) {
+  const errors = [];
+  const normalizedDrinks = [];
+
+  drinks.forEach((drinkId, index) => {
+    const drink = getMenuItem(menu.drinks, drinkId);
+    if (!drink) {
+      errors.push(`Drink number ${index + 1} has an invalid drinkId`);
+    } else {
+      normalizedDrinks.push({
+        id: drink.id,
+        name: drink.name,
+        price: drink.price
+      });
+    }
+  });
+
+  return { errors, normalizedDrinks };
 }
 
 function normalizeAndValidatePizzas(pizzas) {
@@ -85,7 +113,15 @@ function calculatePizzaSubtotal(normalizedPizzas) {
   }, 0);
 }
 
-function applyPersonalRule(normalizedPizzas) {
+function calculateDrinkSubtotal(normalizedDrinks) {
+  return normalizedDrinks.reduce((sum, drink) => sum + drink.price, 0);
+}
+
+function calculateOrderSubtotal(normalizedPizzas, normalizedDrinks) {
+  return calculatePizzaSubtotal(normalizedPizzas) + calculateDrinkSubtotal(normalizedDrinks);
+}
+
+function applyPersonalRule(normalizedPizzas, normalizedDrinks = []) {
   const errors = [];
   let discount = 0;
   let deliveryFee = 0;
@@ -99,12 +135,12 @@ function applyPersonalRule(normalizedPizzas) {
   }
 
   if (PERSONAL_RULE_DIGIT === "1") {
-    const subtotal = calculatePizzaSubtotal(normalizedPizzas);
+    const subtotal = calculateOrderSubtotal(normalizedPizzas, normalizedDrinks);
     deliveryFee = subtotal > 100 ? 0 : 10;
   }
 
   if (PERSONAL_RULE_DIGIT === "2") {
-    const subtotal = calculatePizzaSubtotal(normalizedPizzas);
+    const subtotal = calculateOrderSubtotal(normalizedPizzas, normalizedDrinks);
     deliveryFee = subtotal < 80 ? 15 : 0;
   }
 
@@ -169,9 +205,9 @@ function applyPersonalRule(normalizedPizzas) {
   return { errors, discount, deliveryFee };
 }
 
-function calculateTotal(normalizedPizzas) {
-  const subtotal = calculatePizzaSubtotal(normalizedPizzas);
-  const ruleResult = applyPersonalRule(normalizedPizzas);
+function calculateTotal(normalizedPizzas, normalizedDrinks) {
+  const subtotal = calculateOrderSubtotal(normalizedPizzas, normalizedDrinks);
+  const ruleResult = applyPersonalRule(normalizedPizzas, normalizedDrinks);
   const total = subtotal + ruleResult.deliveryFee - ruleResult.discount;
 
   const detailedPizzas = normalizedPizzas.map((pizza) => {
@@ -182,6 +218,7 @@ function calculateTotal(normalizedPizzas) {
 
   return {
     pizzas: detailedPizzas,
+    drinks: normalizedDrinks,
     subtotal,
     discount: ruleResult.discount,
     deliveryFee: ruleResult.deliveryFee,
@@ -196,10 +233,13 @@ function validateAndPriceOrder(body) {
   const { errors: pizzaErrors, normalizedPizzas } = normalizeAndValidatePizzas(body.pizzas);
   if (pizzaErrors.length > 0) return { valid: false, errors: pizzaErrors };
 
-  const personalRuleResult = applyPersonalRule(normalizedPizzas);
+  const { errors: drinkErrors, normalizedDrinks } = normalizeAndValidateDrinks(body.drinks);
+  if (drinkErrors.length > 0) return { valid: false, errors: drinkErrors };
+
+  const personalRuleResult = applyPersonalRule(normalizedPizzas, normalizedDrinks);
   if (personalRuleResult.errors.length > 0) return { valid: false, errors: personalRuleResult.errors };
 
-  return { valid: true, priceDetails: calculateTotal(normalizedPizzas) };
+  return { valid: true, priceDetails: calculateTotal(normalizedPizzas, normalizedDrinks) };
 }
 
 module.exports = { PERSONAL_RULE_DIGIT, validateAndPriceOrder };

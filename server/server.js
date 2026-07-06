@@ -53,6 +53,7 @@ app.post("/api/orders", (req, res) => {
     phone: req.body.phone.trim(),
     deliveryAddress: req.body.deliveryAddress.trim(),
     pizzas: result.priceDetails.pizzas,
+    drinks: result.priceDetails.drinks,
     subtotal: result.priceDetails.subtotal,
     discount: result.priceDetails.discount,
     deliveryFee: result.priceDetails.deliveryFee,

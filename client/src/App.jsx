@@ -18,7 +18,7 @@ function money(value) {
 
 function App() {
   const [activeRole, setActiveRole] = useState(null);
-  const [menu, setMenu] = useState({ pizzas: [], sizes: [], toppings: [] });
+  const [menu, setMenu] = useState({ pizzas: [], sizes: [], toppings: [], drinks: [] });
   const [selection, setSelection] = useState(emptySelection());
   const [cart, setCart] = useState([]);
   const [customer, setCustomer] = useState({ customerName: "", phone: "", deliveryAddress: "" });
@@ -84,8 +84,17 @@ function App() {
     return menu.toppings.find((topping) => topping.id === id);
   }
 
+  function findDrink(id) {
+    return menu.drinks.find((drink) => drink.id === id);
+  }
+
   function calculateEstimatedTotal() {
     return cart.reduce((sum, item) => {
+      if (item.type === "drink") {
+        const drink = findDrink(item.drinkId);
+        return sum + (drink ? drink.price : 0);
+      }
+
       const pizza = findPizza(item.pizzaId);
       const size = findSize(item.size);
       const toppingsTotal = item.toppings.reduce((toppingSum, toppingId) => {
@@ -113,8 +122,13 @@ function App() {
       setMessage("Each pizza can have up to 3 toppings.");
       return;
     }
-    setCart((currentCart) => [...currentCart, selection]);
+    setCart((currentCart) => [...currentCart, { ...selection, type: "pizza" }]);
     setSelection(emptySelection());
+  }
+
+  function addDrinkToCart(drinkId) {
+    setMessage("");
+    setCart((currentCart) => [...currentCart, { type: "drink", drinkId }]);
   }
 
   function removeFromCart(indexToRemove) {
@@ -137,6 +151,9 @@ function App() {
           phone: customer.phone,
           deliveryAddress: customer.deliveryAddress,
           pizzas: cart
+            .filter((item) => item.type === "pizza")
+            .map(({ pizzaId, size, toppings }) => ({ pizzaId, size, toppings })),
+          drinks: cart.filter((item) => item.type === "drink").map((item) => item.drinkId)
         })
       });
       const data = await response.json();
@@ -193,6 +210,17 @@ function App() {
   }
 
   function renderCartItem(item, index) {
+    if (item.type === "drink") {
+      const drink = findDrink(item.drinkId);
+      return (
+        <li key={`${item.drinkId}-${index}`}>
+          <strong>{drink?.name}</strong>
+          <span> | {money(drink?.price)}</span>
+          <button onClick={() => removeFromCart(index)}>Remove</button>
+        </li>
+      );
+    }
+
     const pizza = findPizza(item.pizzaId);
     const size = findSize(item.size);
     const toppings = item.toppings.map(findTopping).filter(Boolean);
@@ -219,6 +247,11 @@ function App() {
             {pizza.toppings.length > 0 && ` - ${pizza.toppings.map((topping) => topping.name).join(", ")}`}
             {" - "}
             {money(pizza.itemTotal)}
+          </li>
+        ))}
+        {order.drinks?.map((drink, index) => (
+          <li key={`${order.id}-drink-${index}`}>
+            {drink.name} - {money(drink.price)}
           </li>
         ))}
       </ul>
@@ -275,6 +308,15 @@ function App() {
               </div>
             ))}
           </div>
+          <h3>Drinks</h3>
+          <div className="menu-grid">
+            {menu.drinks.map((drink) => (
+              <div className="menu-card" key={drink.id}>
+                <strong>{drink.name}</strong>
+                <span>{money(drink.price)}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="form-grid">
@@ -308,9 +350,18 @@ function App() {
 
         <button onClick={addToCart}>Add Pizza to Cart</button>
 
+        <div className="drink-actions">
+          <h3>Add Drinks</h3>
+          {menu.drinks.map((drink) => (
+            <button key={drink.id} onClick={() => addDrinkToCart(drink.id)}>
+              Add {drink.name} ({money(drink.price)})
+            </button>
+          ))}
+        </div>
+
         <div data-testid="cart" className="cart">
           <h3>Cart</h3>
-          {cart.length === 0 ? <p>No pizzas in cart.</p> : <ul>{cart.map(renderCartItem)}</ul>}
+          {cart.length === 0 ? <p>No items in cart.</p> : <ul>{cart.map(renderCartItem)}</ul>}
         </div>
 
         <div data-testid="order-summary-panel" className="summary">
